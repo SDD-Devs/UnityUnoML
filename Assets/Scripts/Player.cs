@@ -4,7 +4,10 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    public List<Card> cards;
+    public List<Card> cards = new List<Card>();
+
+    public bool isPlaying = true;
+
     private GameManager _gameManager;
 
     private void Awake()

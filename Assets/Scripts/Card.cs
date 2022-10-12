@@ -15,4 +15,26 @@ public class Card
         this.color = color;
         this.value = value;
     }
+
+    override
+    public string ToString()
+    {
+        string result = "";
+
+        if (color == -1) result += "color switch ";
+        else if (color == 0) result += "red ";
+        else if (color == 1) result += "yellow ";
+        else if (color == 2) result += "blue ";
+        else if (color == 3) result += "green ";
+
+        if (value <= 9) result += value;
+
+        if (value == 10) result += "draw 2";
+        else if (value == 11) result += "reverse";
+        else if (value == 12) result += "skip";
+        else if (value == 13) result += "wild card";
+        else if (value == 14) result += "wild card +4";
+
+        return result;
+    }
 }

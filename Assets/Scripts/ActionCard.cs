@@ -15,6 +15,7 @@ public class ActionCard : Card, IEffectCard
         if (value == 10) // draw 2
         {
             gameManager.DrawCard(gameManager.GetNextPlayer(), 2);
+            gameManager.MoveToNextPlayer();
         }
         else if (value == 11) // reverse
         {
@@ -22,7 +23,7 @@ public class ActionCard : Card, IEffectCard
         }
         else if (value == 12) // skip
         {
-            gameManager.SkipNextPlayer();
+            gameManager.MoveToNextPlayer();
         }
     }
 }

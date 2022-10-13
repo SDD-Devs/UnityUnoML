@@ -12,13 +12,18 @@ public class WildCard : Card, IEffectCard
     {
         GameManager gameManager = GameManager.instance;
 
-        if(value == 13)
+        if (value == 13)
         {
-            gameManager.WildCardPlayed();
+            //Simulate player choosing 1 of 4 colors
+            gameManager.ChangeColor();
         }
-        else if(value == 14)
+        else if (value == 14)
         {
-            gameManager.WildCardDrawwFourPlayed();
+            //Simulate player choosing 1 of 4 colors
+            gameManager.ChangeColor();
+
+            gameManager.DrawCard(gameManager.GetNextPlayer(), 4);
+            gameManager.MoveToNextPlayer();
         }
     }
 }

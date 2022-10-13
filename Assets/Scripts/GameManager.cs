@@ -10,13 +10,18 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager instance { get; private set; }
 
+    public bool gameFinished = false;
+
     public List<Card> deck;
     public List<Player> players;
 
     public Card groundCard;
+    public List<Card> playedCards = new();
+
     public bool normalOrder = true;
 
     public Player currentPlayer;
+    public Player nextPlayer;
 
     public Transform temp;
 
@@ -32,28 +37,47 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        deck = GetNewDeck();
+        deck = GetStartingDeck();
 
         ServeGroundCard();
         GiveOutStartCards();
         ChooseRandomStartingPlayer();
-
-        StartCoroutine(DoRandomMove());
     }
 
-    private IEnumerator DoRandomMove()
-    {
-        yield return new WaitForSeconds(3.0f);
+    //private IEnumerator DoRandomMove()
+    //{
+    //    yield return new WaitForSeconds(3.0f);
 
-        
-        PlayCard(0);
-        
 
-        StartCoroutine(DoRandomMove());
-    }
+    //    PlayCard(0);
+
+
+    //    StartCoroutine(DoRandomMove());
+    //}
 
     private void Update()
     {
+        if (Input.GetButtonDown("Fire1") && !gameFinished)
+        {
+            bool noPlayableCards = true;
+            foreach (Card card in currentPlayer.cards)
+            {
+                if (ValidateCardToPlay(card))
+                {
+                    PlayCard(card);
+                    noPlayableCards = false;
+                    break;
+                }
+            }
+            if (noPlayableCards)
+            {
+                DrawCard(currentPlayer, 1);
+                Card drawnCard = currentPlayer.cards[currentPlayer.cards.Count - 1];
+                if (ValidateCardToPlay(drawnCard)) PlayCard(drawnCard);
+                else MoveToNextPlayer();
+            }
+        }
+
         foreach (Player player in players)
         {
             TextMeshPro text = player.GetComponent<TextMeshPro>();
@@ -62,14 +86,14 @@ public class GameManager : MonoBehaviour
             {
                 text.text += card.ToString() + "\n";
             }
-            if(player == currentPlayer) text.color = new Color(0, 200, 0);
+            if (player == currentPlayer) text.color = new Color(0, 200, 0);
             else text.color = new Color(255, 255, 255);
         }
 
         temp.GetComponent<TextMeshPro>().text = groundCard.ToString();
     }
 
-    private List<Card> GetNewDeck()
+    private List<Card> GetStartingDeck()
     {
         List<Card> deck = new();
 
@@ -101,6 +125,19 @@ public class GameManager : MonoBehaviour
         }
 
         return deck;
+    }
+
+    private List<Card> GetShuffledDeck()
+    {
+        for (int i = 0; i < playedCards.Count; i++) // Shuffles the deck
+        {
+            Card temp = playedCards[i];
+            int randomIndex = Random.Range(i, playedCards.Count);
+            playedCards[i] = playedCards[randomIndex];
+            playedCards[randomIndex] = temp;
+        }
+
+        return playedCards;
     }
 
     private void ChooseRandomStartingPlayer()
@@ -137,6 +174,11 @@ public class GameManager : MonoBehaviour
         for (int i = 0; i < numberOfCards; i++)
         {
             player.cards.Add(TakeTopCard());
+            if (deck.Count == 0)
+            {
+                deck = GetShuffledDeck();
+                playedCards.Clear();
+            }
         }
     }
 
@@ -145,27 +187,30 @@ public class GameManager : MonoBehaviour
         currentPlayer = GetNextPlayer();
     }
 
-    public bool PlayCard(int index)
+    public void PlayCard(Card card)
     {
-        Card card = currentPlayer.cards[index];
+        playedCards.Add(groundCard);
+        groundCard = card;
+        currentPlayer.cards.Remove(card);
 
-        // Validate the card ValidateCardToPlay(card)
-
+        //Win check
+        if (currentPlayer.cards.Count == 0)
+        {
+            gameFinished = true;
+        }
 
         if (card is IEffectCard effectCard)
         {
             effectCard.PerformEffect();
         }
 
-        groundCard = card;
-        currentPlayer.cards.RemoveAt(index);
-
         MoveToNextPlayer();
-
-        return true;
     }
 
-    
+    public void ChangeColor()
+    {
+        groundCard.color = Random.Range(0, 4);
+    }
     public void ReverseOrder()
     {
         normalOrder = !normalOrder;
@@ -197,45 +242,17 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void SkipNextPlayer()
-    {
-        MoveToNextPlayer();
-    }
-
-
-    public void WildCardPlayed()
-    {
-        //Simulate player choosing 1 of 4 colors
-        int newColor = Random.Range(0, 4);
-        groundCard = new Card(newColor, 13);
-    }
-
-    public void WildCardDrawwFourPlayed()
-    {
-        //Simulate player choosing 1 of 4 colors
-        int newColor = Random.Range(0, 4);
-        groundCard = new Card(newColor, 13);
-
-        DrawCard(GetNextPlayer(), 4);
-    }
-
     private bool ValidateCardToPlay(Card card)
     {
-        if(card.value <= 12)
+        if (card.value <= 12)
         {
             //Check the color OR the value
-            if (groundCard.color == card.color || groundCard.value == card.value)
-                return true;
-            else
-                return false;
-            
+            return groundCard.color == card.color || groundCard.value == card.value;
         }
         else
         {
             //wild cards
             return true;
         }
-
-        return true;
     }
 }

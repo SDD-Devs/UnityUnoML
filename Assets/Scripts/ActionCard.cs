@@ -22,7 +22,7 @@ public class ActionCard : Card, IEffectCard
         }
         else if (value == 12) // skip
         {
-
+            gameManager.SkipNextPlayer();
         }
     }
 }

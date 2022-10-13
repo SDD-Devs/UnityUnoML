@@ -9,5 +9,16 @@ public class WildCard : Card, IEffectCard
     }
 
     public void PerformEffect()
-    {}
+    {
+        GameManager gameManager = GameManager.instance;
+
+        if(value == 13)
+        {
+            gameManager.WildCardPlayed();
+        }
+        else if(value == 14)
+        {
+            gameManager.WildCardDrawwFourPlayed();
+        }
+    }
 }

@@ -1,7 +1,10 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+
+using Random = UnityEngine.Random;
 
 public class GameManager : MonoBehaviour
 {
@@ -42,7 +45,9 @@ public class GameManager : MonoBehaviour
     {
         yield return new WaitForSeconds(3.0f);
 
+        
         PlayCard(0);
+        
 
         StartCoroutine(DoRandomMove());
     }
@@ -98,12 +103,9 @@ public class GameManager : MonoBehaviour
         return deck;
     }
 
-    private Card TakeTopCard()
+    private void ChooseRandomStartingPlayer()
     {
-        Card card = deck[0];
-        deck.RemoveAt(0);
-
-        return card;
+        currentPlayer = players[Random.Range(0, players.Count)];
     }
 
     private void GiveOutStartCards()
@@ -122,9 +124,12 @@ public class GameManager : MonoBehaviour
         groundCard = TakeTopCard();
     }
 
-    private void ChooseRandomStartingPlayer()
+    private Card TakeTopCard()
     {
-        currentPlayer = players[Random.Range(0, players.Count)];
+        Card card = deck[0];
+        deck.RemoveAt(0);
+
+        return card;
     }
 
     public void DrawCard(Player player, int numberOfCards)
@@ -135,11 +140,18 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public void MoveToNextPlayer()
+    {
+        currentPlayer = GetNextPlayer();
+    }
+
     public bool PlayCard(int index)
     {
         Card card = currentPlayer.cards[index];
 
-        //TODO Validate
+        // Validate the card ValidateCardToPlay(card)
+
+
         if (card is IEffectCard effectCard)
         {
             effectCard.PerformEffect();
@@ -153,11 +165,7 @@ public class GameManager : MonoBehaviour
         return true;
     }
 
-    public void MoveToNextPlayer()
-    {
-        currentPlayer = GetNextPlayer();
-    }
-
+    
     public void ReverseOrder()
     {
         normalOrder = !normalOrder;
@@ -189,4 +197,45 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public void SkipNextPlayer()
+    {
+        MoveToNextPlayer();
+    }
+
+
+    public void WildCardPlayed()
+    {
+        //Simulate player choosing 1 of 4 colors
+        int newColor = Random.Range(0, 4);
+        groundCard = new Card(newColor, 13);
+    }
+
+    public void WildCardDrawwFourPlayed()
+    {
+        //Simulate player choosing 1 of 4 colors
+        int newColor = Random.Range(0, 4);
+        groundCard = new Card(newColor, 13);
+
+        DrawCard(GetNextPlayer(), 4);
+    }
+
+    private bool ValidateCardToPlay(Card card)
+    {
+        if(card.value <= 12)
+        {
+            //Check the color OR the value
+            if (groundCard.color == card.color || groundCard.value == card.value)
+                return true;
+            else
+                return false;
+            
+        }
+        else
+        {
+            //wild cards
+            return true;
+        }
+
+        return true;
+    }
 }

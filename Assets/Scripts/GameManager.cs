@@ -3,6 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using Unity.MLAgents;
+using Unity.MLAgents.Actuators;
+using Unity.MLAgents.Sensors;
 using UnityEngine;
 
 using Random = UnityEngine.Random;
@@ -50,39 +53,15 @@ public class GameManager : MonoBehaviour
         ChooseRandomStartingPlayer();
     }
 
-    private IEnumerator Test()
-    {
-        yield return new WaitForSeconds(1.0f);
-
-
-
-        StartCoroutine(Test());
-    }
-
     private void Update()
     {
         if (gameFinished) return;
 
-        //bool noPlayableCards = true;
-        //foreach (GameObject card in currentPlayer.cards)
-        //{
-        //    if (ValidateCardToPlay(card))
-        //    {
-        //        noPlayableCards = false;
-        //        break;
-        //    }
-        //}
-        //if (noPlayableCards)
-        //{
-        //    GameObject card = _deck.DrawCard();
-        //    currentPlayer.cards.Add(card);
-        //    card.transform.parent = currentPlayer.transform;
-        //    card.transform.position = currentPlayer.transform.position;
-        //    currentPlayer.UpdateCardVisual();
-        //    MoveToNextPlayer();
-        //}
+        if (!Input.GetMouseButtonDown(0)) return;
 
-        HandleCardClick();
+        currentPlayer.RequestDecision();
+
+        //HandleCardClick();
     }
 
     private void HandleCardClick()
@@ -227,7 +206,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private bool ValidateCardToPlay(GameObject card)
+    public bool ValidateCardToPlay(GameObject card)
     {
         if (card.GetComponent<Card>().value <= 12)
         {
@@ -246,3 +225,23 @@ public class GameManager : MonoBehaviour
         groundCard = _discarded.cards[_discarded.cards.Count - 1];
     }
 }
+
+
+//bool noPlayableCards = true;
+//foreach (GameObject card in currentPlayer.cards)
+//{
+//    if (ValidateCardToPlay(card))
+//    {
+//        noPlayableCards = false;
+//        break;
+//    }
+//}
+//if (noPlayableCards)
+//{
+//    GameObject card = _deck.DrawCard();
+//    currentPlayer.cards.Add(card);
+//    card.transform.parent = currentPlayer.transform;
+//    card.transform.position = currentPlayer.transform.position;
+//    currentPlayer.UpdateCardVisual();
+//    MoveToNextPlayer();
+//}

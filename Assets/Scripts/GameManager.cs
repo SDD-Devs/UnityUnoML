@@ -61,54 +61,71 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetButtonDown("Fire1") && !gameFinished)
-        {
-            bool noPlayableCards = true;
-            foreach (GameObject card in currentPlayer.cards)
-            {
-                if (ValidateCardToPlay(card))
-                {
-                    PlayCard(card);
-                    noPlayableCards = false;
-                    break;
-                }
-            }
-            if (noPlayableCards)
-            {
-                GameObject card = _deck.DrawCard();
-                currentPlayer.cards.Add(card);
-                card.transform.parent = currentPlayer.transform;
-                card.transform.position = currentPlayer.transform.position;
-                currentPlayer.UpdateCardVisual();
-                GameObject drawnCard = currentPlayer.cards[currentPlayer.cards.Count - 1];
-                if (ValidateCardToPlay(drawnCard)) PlayCard(drawnCard);
-                else MoveToNextPlayer();
-            }
-        }
+        if (gameFinished) return;
 
-        //foreach (Player player in players)
+        //bool noPlayableCards = true;
+        //foreach (GameObject card in currentPlayer.cards)
         //{
-        //    TextMeshPro text = player.GetComponent<TextMeshPro>();
-        //    text.text = "";
-        //    foreach (Card card in player.cards)
+        //    if (ValidateCardToPlay(card))
         //    {
-        //        text.text += card.ToString() + "\n";
+        //        noPlayableCards = false;
+        //        break;
         //    }
-        //    if (player == currentPlayer) text.color = new Color(0, 200, 0);
-        //    else text.color = new Color(255, 255, 255);
+        //}
+        //if (noPlayableCards)
+        //{
+        //    GameObject card = _deck.DrawCard();
+        //    currentPlayer.cards.Add(card);
+        //    card.transform.parent = currentPlayer.transform;
+        //    card.transform.position = currentPlayer.transform.position;
+        //    currentPlayer.UpdateCardVisual();
+        //    MoveToNextPlayer();
         //}
 
-        //temp.GetComponent<TextMeshPro>().text = groundCard.ToString();
+        HandleCardClick();
+    }
+
+    private void HandleCardClick()
+    {
+        if (!Input.GetMouseButtonDown(0)) return;
+
+        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 mousePos2D = new Vector2(mousePos.x, mousePos.y);
+
+        RaycastHit2D hit = Physics2D.Raycast(mousePos2D, Vector2.zero);
+
+        if (hit.collider == null) return;
+        GameObject clicked = hit.collider.gameObject;
+
+        if (clicked.transform.parent.TryGetComponent(out Player player))
+        {
+            if (currentPlayer != player) return;
+            if (!ValidateCardToPlay(clicked)) return;
+            PlayCard(clicked);
+        }
+        else if (clicked.transform.parent.TryGetComponent(out Deck deck))
+        {
+            GameObject card = _deck.DrawCard();
+            currentPlayer.cards.Add(card);
+            card.transform.parent = currentPlayer.transform;
+            card.transform.position = currentPlayer.transform.position;
+            currentPlayer.UpdateCardVisual();
+            MoveToNextPlayer();
+        }
+        else return;
     }
 
     private void ChooseRandomStartingPlayer()
     {
         currentPlayer = players[Random.Range(0, players.Count)];
+        MoveToNextPlayer();
     }
 
     public void MoveToNextPlayer()
     {
+        currentPlayer.transform.Find("IsPlayingSprite").gameObject.SetActive(false);
         currentPlayer = GetNextPlayer();
+        currentPlayer.transform.Find("IsPlayingSprite").gameObject.SetActive(true);
     }
 
     public void PlayCard(GameObject card)

@@ -85,9 +85,10 @@ public class Deck : MonoBehaviour
     public void ReuseDiscarded()
     {
         _discarded = Discarded.instance;
-        for (int i = 0; i < _discarded.cards.Count - 1; i++)
+        int count = _discarded.cards.Count - 1;
+        for (int i = 0; i < count; i++)
         {
-            GameObject card = _discarded.cards[i];
+            GameObject card = _discarded.cards[0];
             cards.Add(card);
             _discarded.cards.Remove(card);
             card.transform.parent = transform;

@@ -10,20 +10,20 @@ public class ActionCard : Card, IEffectCard
 
     public void PerformEffect()
     {
-        GameManager gameManager = GameManager.instance;
+        //GameManager gameManager = GameManager.instance;
 
-        if (value == 10) // draw 2
-        {
-            gameManager.DrawCard(gameManager.GetNextPlayer(), 2);
-            gameManager.MoveToNextPlayer();
-        }
-        else if (value == 11) // reverse
-        {
-            gameManager.ReverseOrder();
-        }
-        else if (value == 12) // skip
-        {
-            gameManager.MoveToNextPlayer();
-        }
+        //if (value == 10) // draw 2
+        //{
+        //    gameManager.DrawCard(gameManager.GetNextPlayer(), 2);
+        //    gameManager.MoveToNextPlayer();
+        //}
+        //else if (value == 11) // reverse
+        //{
+        //    gameManager.ReverseOrder();
+        //}
+        //else if (value == 12) // skip
+        //{
+        //    gameManager.MoveToNextPlayer();
+        //}
     }
 }

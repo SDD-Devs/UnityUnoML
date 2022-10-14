@@ -10,57 +10,58 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager instance { get; private set; }
 
+    public GameObject _cardPrefab;
+
     public bool gameFinished = false;
 
-    public List<Card> deck;
+    private Deck _deck;
+    private Discarded _discarded;
+
     public List<Player> players;
 
-    public Card groundCard;
-    public List<Card> playedCards = new();
+    public GameObject groundCard;
 
     public bool normalOrder = true;
 
     public Player currentPlayer;
     public Player nextPlayer;
 
-    public Transform temp;
-
     private void Awake()
     {
         instance = this;
-
-        foreach (Player player in FindObjectsOfType<Player>())
-        {
-            players.Add(player);
-        }
     }
 
     private void Start()
     {
-        deck = GetStartingDeck();
+        _deck = Deck.instance;
+        _discarded = Discarded.instance;
 
-        ServeGroundCard();
-        GiveOutStartCards();
+        foreach (Player player in FindObjectsOfType<Player>()) players.Add(player);
+
+        _deck.CreateStartingDeck();
+
+        _discarded.ServeFirstCard();
+
+        _deck.GiveOutStartCards();
+
         ChooseRandomStartingPlayer();
     }
 
-    //private IEnumerator DoRandomMove()
-    //{
-    //    yield return new WaitForSeconds(3.0f);
+    private IEnumerator Test()
+    {
+        yield return new WaitForSeconds(1.0f);
 
 
-    //    PlayCard(0);
 
-
-    //    StartCoroutine(DoRandomMove());
-    //}
+        StartCoroutine(Test());
+    }
 
     private void Update()
     {
         if (Input.GetButtonDown("Fire1") && !gameFinished)
         {
             bool noPlayableCards = true;
-            foreach (Card card in currentPlayer.cards)
+            foreach (GameObject card in currentPlayer.cards)
             {
                 if (ValidateCardToPlay(card))
                 {
@@ -71,73 +72,26 @@ public class GameManager : MonoBehaviour
             }
             if (noPlayableCards)
             {
-                DrawCard(currentPlayer, 1);
-                Card drawnCard = currentPlayer.cards[currentPlayer.cards.Count - 1];
+                currentPlayer.cards.Add(_deck.DrawCard());
+                GameObject drawnCard = currentPlayer.cards[currentPlayer.cards.Count - 1];
                 if (ValidateCardToPlay(drawnCard)) PlayCard(drawnCard);
                 else MoveToNextPlayer();
             }
         }
 
-        foreach (Player player in players)
-        {
-            TextMeshPro text = player.GetComponent<TextMeshPro>();
-            text.text = "";
-            foreach (Card card in player.cards)
-            {
-                text.text += card.ToString() + "\n";
-            }
-            if (player == currentPlayer) text.color = new Color(0, 200, 0);
-            else text.color = new Color(255, 255, 255);
-        }
+        //foreach (Player player in players)
+        //{
+        //    TextMeshPro text = player.GetComponent<TextMeshPro>();
+        //    text.text = "";
+        //    foreach (Card card in player.cards)
+        //    {
+        //        text.text += card.ToString() + "\n";
+        //    }
+        //    if (player == currentPlayer) text.color = new Color(0, 200, 0);
+        //    else text.color = new Color(255, 255, 255);
+        //}
 
-        temp.GetComponent<TextMeshPro>().text = groundCard.ToString();
-    }
-
-    private List<Card> GetStartingDeck()
-    {
-        List<Card> deck = new();
-
-        for (int color = 0; color < 4; color++) // Each of the 4 colors
-        {
-            deck.Add(new Card(color, 0)); // 0s
-            deck.Add(new WildCard(-1, 13)); // Wilds
-            deck.Add(new WildCard(-1, 14)); // Wild draw 4s
-
-            for (int value = 1; value <= 9; value++) // 2 of each cards 1-9
-            {
-                deck.Add(new Card(color, value));
-                deck.Add(new Card(color, value));
-            }
-
-            for (int value = 10; value <= 12; value++) // 2 of each action cards
-            {
-                deck.Add(new ActionCard(color, value));
-                deck.Add(new ActionCard(color, value));
-            }
-        }
-
-        for (int i = 0; i < deck.Count; i++) // Shuffles the deck
-        {
-            Card temp = deck[i];
-            int randomIndex = Random.Range(i, deck.Count);
-            deck[i] = deck[randomIndex];
-            deck[randomIndex] = temp;
-        }
-
-        return deck;
-    }
-
-    private List<Card> GetShuffledDeck()
-    {
-        for (int i = 0; i < playedCards.Count; i++) // Shuffles the deck
-        {
-            Card temp = playedCards[i];
-            int randomIndex = Random.Range(i, playedCards.Count);
-            playedCards[i] = playedCards[randomIndex];
-            playedCards[randomIndex] = temp;
-        }
-
-        return playedCards;
+        //temp.GetComponent<TextMeshPro>().text = groundCard.ToString();
     }
 
     private void ChooseRandomStartingPlayer()
@@ -145,53 +99,20 @@ public class GameManager : MonoBehaviour
         currentPlayer = players[Random.Range(0, players.Count)];
     }
 
-    private void GiveOutStartCards()
-    {
-        foreach (Player player in players)
-        {
-            for (int i = 0; i < 7; i++)
-            {
-                player.cards.Add(TakeTopCard());
-            }
-        }
-    }
-
-    private void ServeGroundCard()
-    {
-        groundCard = TakeTopCard();
-    }
-
-    private Card TakeTopCard()
-    {
-        Card card = deck[0];
-        deck.RemoveAt(0);
-
-        return card;
-    }
-
-    public void DrawCard(Player player, int numberOfCards)
-    {
-        for (int i = 0; i < numberOfCards; i++)
-        {
-            player.cards.Add(TakeTopCard());
-            if (deck.Count == 0)
-            {
-                deck = GetShuffledDeck();
-                playedCards.Clear();
-            }
-        }
-    }
-
     public void MoveToNextPlayer()
     {
         currentPlayer = GetNextPlayer();
     }
 
-    public void PlayCard(Card card)
+    public void PlayCard(GameObject card)
     {
-        playedCards.Add(groundCard);
-        groundCard = card;
+        _discarded.cards.Add(card);
+        card.transform.parent = _discarded.transform;
+        card.transform.position = _discarded.transform.position;
+        UpdateGroundCard();
+
         currentPlayer.cards.Remove(card);
+        currentPlayer.UpdateCardVisual();
 
         //Win check
         if (currentPlayer.cards.Count == 0)
@@ -199,17 +120,45 @@ public class GameManager : MonoBehaviour
             gameFinished = true;
         }
 
-        if (card is IEffectCard effectCard)
-        {
-            effectCard.PerformEffect();
-        }
+        if (card.GetComponent<Card>().value > 9) PerformSpecialCardEffect(card.GetComponent<Card>().value);
 
         MoveToNextPlayer();
     }
 
+    private void PerformSpecialCardEffect(int value)
+    {
+        if (value == 10) // +2
+        {
+            GetNextPlayer().cards.Add(_deck.DrawCard());
+            GetNextPlayer().cards.Add(_deck.DrawCard());
+            MoveToNextPlayer();
+        }
+        else if (value == 11) // reverse
+        {
+            normalOrder = !normalOrder;
+        }
+        else if (value == 12) // skip
+        {
+            MoveToNextPlayer();
+        }
+        else if (value == 13) // wild
+        {
+            ChangeColor();
+        }
+        else if (value == 14) // wild +4
+        {
+            GetNextPlayer().cards.Add(_deck.DrawCard());
+            GetNextPlayer().cards.Add(_deck.DrawCard());
+            GetNextPlayer().cards.Add(_deck.DrawCard());
+            GetNextPlayer().cards.Add(_deck.DrawCard());
+            ChangeColor();
+            MoveToNextPlayer();
+        }
+    }
+
     public void ChangeColor()
     {
-        groundCard.color = Random.Range(0, 4);
+        groundCard.GetComponent<Card>().color = Random.Range(0, 4);
     }
     public void ReverseOrder()
     {
@@ -242,17 +191,24 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private bool ValidateCardToPlay(Card card)
+    private bool ValidateCardToPlay(GameObject card)
     {
-        if (card.value <= 12)
+        int groundCardColor = groundCard.GetComponent<Card>().color;
+        int validatingCardColor = card.GetComponent<Card>().color;
+        if (card.GetComponent<Card>().value <= 12)
         {
             //Check the color OR the value
-            return groundCard.color == card.color || groundCard.value == card.value;
+            return groundCardColor == validatingCardColor || groundCardColor == validatingCardColor;
         }
         else
         {
             //wild cards
             return true;
         }
+    }
+
+    public void UpdateGroundCard()
+    {
+        groundCard = _discarded.cards[_discarded.cards.Count - 1];
     }
 }

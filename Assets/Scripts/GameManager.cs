@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -38,6 +39,8 @@ public class GameManager : MonoBehaviour
 
         foreach (Player player in FindObjectsOfType<Player>()) players.Add(player);
 
+        players = players.OrderBy(o => o.index).ToList(); // sorting the players in their index order
+
         _deck.CreateStartingDeck();
 
         _discarded.ServeFirstCard();
@@ -72,7 +75,11 @@ public class GameManager : MonoBehaviour
             }
             if (noPlayableCards)
             {
-                currentPlayer.cards.Add(_deck.DrawCard());
+                GameObject card = _deck.DrawCard();
+                currentPlayer.cards.Add(card);
+                card.transform.parent = currentPlayer.transform;
+                card.transform.position = currentPlayer.transform.position;
+                currentPlayer.UpdateCardVisual();
                 GameObject drawnCard = currentPlayer.cards[currentPlayer.cards.Count - 1];
                 if (ValidateCardToPlay(drawnCard)) PlayCard(drawnCard);
                 else MoveToNextPlayer();
@@ -114,6 +121,8 @@ public class GameManager : MonoBehaviour
         currentPlayer.cards.Remove(card);
         currentPlayer.UpdateCardVisual();
 
+        _discarded.UpdateCardVisual();
+
         //Win check
         if (currentPlayer.cards.Count == 0)
         {
@@ -129,8 +138,14 @@ public class GameManager : MonoBehaviour
     {
         if (value == 10) // +2
         {
-            GetNextPlayer().cards.Add(_deck.DrawCard());
-            GetNextPlayer().cards.Add(_deck.DrawCard());
+            for (int i = 0; i < 2; i++)
+            {
+                GameObject card = _deck.DrawCard();
+                GetNextPlayer().cards.Add(card);
+                card.transform.parent = GetNextPlayer().transform;
+                card.transform.position = GetNextPlayer().transform.position;
+            }
+            GetNextPlayer().UpdateCardVisual();
             MoveToNextPlayer();
         }
         else if (value == 11) // reverse
@@ -147,10 +162,14 @@ public class GameManager : MonoBehaviour
         }
         else if (value == 14) // wild +4
         {
-            GetNextPlayer().cards.Add(_deck.DrawCard());
-            GetNextPlayer().cards.Add(_deck.DrawCard());
-            GetNextPlayer().cards.Add(_deck.DrawCard());
-            GetNextPlayer().cards.Add(_deck.DrawCard());
+            for (int i = 0; i < 4; i++)
+            {
+                GameObject card = _deck.DrawCard();
+                GetNextPlayer().cards.Add(card);
+                card.transform.parent = GetNextPlayer().transform;
+                card.transform.position = GetNextPlayer().transform.position;
+            }
+            GetNextPlayer().UpdateCardVisual();
             ChangeColor();
             MoveToNextPlayer();
         }
@@ -193,12 +212,10 @@ public class GameManager : MonoBehaviour
 
     private bool ValidateCardToPlay(GameObject card)
     {
-        int groundCardColor = groundCard.GetComponent<Card>().color;
-        int validatingCardColor = card.GetComponent<Card>().color;
         if (card.GetComponent<Card>().value <= 12)
         {
             //Check the color OR the value
-            return groundCardColor == validatingCardColor || groundCardColor == validatingCardColor;
+            return groundCard.GetComponent<Card>().color == card.GetComponent<Card>().color || groundCard.GetComponent<Card>().value == card.GetComponent<Card>().value;
         }
         else
         {

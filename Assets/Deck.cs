@@ -84,7 +84,8 @@ public class Deck : MonoBehaviour
 
     public void ReuseDiscarded()
     {
-        for (int i = 0; i < _discarded.cards.Count; i++)
+        _discarded = Discarded.instance;
+        for (int i = 0; i < _discarded.cards.Count - 1; i++)
         {
             GameObject card = _discarded.cards[i];
             cards.Add(card);
@@ -98,6 +99,7 @@ public class Deck : MonoBehaviour
 
     private GameObject CreateCard(int color, int value)
     {
+        _gameManager = GameManager.instance;
         GameObject card = Instantiate(_gameManager._cardPrefab) as GameObject;
         card.transform.parent = transform;
         Card cardComponent = card.GetComponent<Card>();

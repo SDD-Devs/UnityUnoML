@@ -7,16 +7,21 @@ using Unity.MLAgents.Actuators;
 
 public class Player : Agent
 {
+    private GameInstance _gameInstance;
+    private GameManager _gameManager;
+    private List<Player> _players;
+    private Deck _deck;
+    
     public List<GameObject> cards = new();
 
     public int index;
 
-    private GameManager _gameManager;
-    private Deck _deck;
-
-    private void Awake()
+    public void CacheReferences()
     {
-        _gameManager = GameManager.instance;
+        _gameInstance = transform.parent.parent.GetComponent<GameInstance>();
+        _gameManager = _gameInstance.gameManager;
+        _players = _gameInstance.players;
+        _deck = _gameInstance.deck;
     }
 
     public void UpdateCardVisual()
@@ -32,8 +37,6 @@ public class Player : Agent
     }
     public override void CollectObservations(VectorSensor sensor)
     {
-        _gameManager = GameManager.instance;
-
         int emptyCards = 30 - cards.Count;
         for (int i = 0; i < cards.Count; i++) // cards in hand
         {
@@ -50,7 +53,7 @@ public class Player : Agent
 
         sensor.AddObservation((_gameManager.normalOrder)); // order of game
 
-        foreach (Player player in _gameManager.players) // other player's number of cards
+        foreach (Player player in _players) // other player's number of cards
         {
             if (player == this) continue;
 

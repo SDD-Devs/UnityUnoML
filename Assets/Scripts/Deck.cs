@@ -4,22 +4,19 @@ using UnityEngine;
 
 public class Deck : MonoBehaviour
 {
-    public static Deck instance;
-
+    private GameInstance _gameInstance;
     private GameManager _gameManager;
+    private List<Player> _players;
     private Discarded _discarded;
 
     public List<GameObject> cards;
 
-    private void Awake()
+    public void CacheReferences()
     {
-        instance = this;
-    }
-
-    private void Start()
-    {
-        _gameManager = GameManager.instance;
-        _discarded = Discarded.instance;
+        _gameInstance = transform.parent.parent.GetComponent<GameInstance>();
+        _gameManager = _gameInstance.gameManager;
+        _players = _gameInstance.players;
+        _discarded = _gameInstance.discarded;
     }
 
     public void CreateStartingDeck()
@@ -67,9 +64,7 @@ public class Deck : MonoBehaviour
 
     public void GiveOutStartCards()
     {
-        List<Player> players = _gameManager.players;
-
-        foreach(Player player in players)
+        foreach(Player player in _players)
         {
             for(int i = 0; i < 7; i++)
             {
@@ -84,7 +79,6 @@ public class Deck : MonoBehaviour
 
     public void ReuseDiscarded()
     {
-        _discarded = Discarded.instance;
         int count = _discarded.cards.Count - 1;
         for (int i = 0; i < count; i++)
         {
@@ -100,7 +94,6 @@ public class Deck : MonoBehaviour
 
     private GameObject CreateCard(int color, int value)
     {
-        _gameManager = GameManager.instance;
         GameObject card = Instantiate(_gameManager._cardPrefab) as GameObject;
         card.transform.parent = transform;
         Card cardComponent = card.GetComponent<Card>();

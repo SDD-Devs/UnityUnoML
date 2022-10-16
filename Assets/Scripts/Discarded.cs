@@ -5,22 +5,17 @@ using UnityEngine;
 
 public class Discarded : MonoBehaviour
 {
-    public static Discarded instance;
-
+    private GameInstance _gameInstance;
     private GameManager _gameManager;
     private Deck _deck;
 
     public List<GameObject> cards;
 
-    private void Awake()
+    public void CacheReferences()
     {
-        instance = this;
-    }
-
-    private void Start()
-    {
-        _gameManager = GameManager.instance;
-        _deck = Deck.instance;
+        _gameInstance = transform.parent.parent.GetComponent<GameInstance>();
+        _gameManager = _gameInstance.gameManager;
+        _deck = _gameInstance.deck;
     }
 
     public void ServeFirstCard()
@@ -35,7 +30,6 @@ public class Discarded : MonoBehaviour
             card.transform.position = transform.position;
             UpdateCardVisual();
         }
-        _deck = Deck.instance;
         _deck.ReuseDiscarded();
     }
 

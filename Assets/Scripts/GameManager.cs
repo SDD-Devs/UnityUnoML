@@ -12,16 +12,14 @@ using Random = UnityEngine.Random;
 
 public class GameManager : MonoBehaviour
 {
-    public static GameManager instance { get; private set; }
+    private GameInstance _gameInstance;
+    private Deck _deck;
+    private Discarded _discarded;
+    private List<Player> _players;
 
     public GameObject _cardPrefab;
 
     public bool gameFinished = false;
-
-    private Deck _deck;
-    private Discarded _discarded;
-
-    public List<Player> players;
 
     public GameObject groundCard;
 
@@ -30,19 +28,17 @@ public class GameManager : MonoBehaviour
     public Player currentPlayer;
     public Player nextPlayer;
 
-    private void Awake()
+    public void CacheReferences()
     {
-        instance = this;
+        _gameInstance = transform.parent.parent.GetComponent<GameInstance>();
+        _deck = _gameInstance.deck;
+        _discarded = _gameInstance.discarded;
+        _players = _gameInstance.players;
     }
 
     private void Start()
     {
-        _deck = Deck.instance;
-        _discarded = Discarded.instance;
-
-        foreach (Player player in FindObjectsOfType<Player>()) players.Add(player);
-
-        players = players.OrderBy(o => o.index).ToList(); // sorting the players in their index order
+        _players = _players.OrderBy(o => o.index).ToList(); // sorting the players in their index order
 
         _deck.CreateStartingDeck();
 
@@ -53,15 +49,22 @@ public class GameManager : MonoBehaviour
         ChooseRandomStartingPlayer();
     }
 
+    //private void FixedUpdate()
+    //{
+    //    if (gameFinished) return;
+
+    //    currentPlayer.RequestDecision();
+    //}
+
     private void Update()
     {
         if (gameFinished) return;
 
         if (!Input.GetMouseButtonDown(0)) return;
 
-        currentPlayer.RequestDecision();
+        //StartCoroutine(SecondTimer());
 
-        //HandleCardClick();
+        HandleCardClick();
     }
 
     private void HandleCardClick()
@@ -96,7 +99,7 @@ public class GameManager : MonoBehaviour
 
     private void ChooseRandomStartingPlayer()
     {
-        currentPlayer = players[Random.Range(0, players.Count)];
+        currentPlayer = _players[Random.Range(0, _players.Count)];
         MoveToNextPlayer();
     }
 
@@ -123,6 +126,7 @@ public class GameManager : MonoBehaviour
         if (currentPlayer.cards.Count == 0)
         {
             gameFinished = true;
+            currentPlayer.AddReward(1.0f);
         }
 
         if (card.GetComponent<Card>().value > 9) PerformSpecialCardEffect(card.GetComponent<Card>().value);
@@ -184,24 +188,24 @@ public class GameManager : MonoBehaviour
     {
         if (normalOrder)
         {
-            if (players.IndexOf(currentPlayer) == players.Count - 1) // if last
+            if (_players.IndexOf(currentPlayer) == _players.Count - 1) // if last
             {
-                return players[0];
+                return _players[0];
             }
             else
             {
-                return players[players.IndexOf(currentPlayer) + 1];
+                return _players[_players.IndexOf(currentPlayer) + 1];
             }
         }
         else
         {
-            if (players.IndexOf(currentPlayer) == 0) // if last
+            if (_players.IndexOf(currentPlayer) == 0) // if last
             {
-                return players[players.Count - 1];
+                return _players[_players.Count - 1];
             }
             else
             {
-                return players[players.IndexOf(currentPlayer) - 1];
+                return _players[_players.IndexOf(currentPlayer) - 1];
             }
         }
     }

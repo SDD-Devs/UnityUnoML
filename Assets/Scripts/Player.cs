@@ -11,17 +11,20 @@ public class Player : Agent
     private GameManager _gameManager;
     private List<Player> _players;
     private Deck _deck;
-    
+    private ColorChange _colorChange;
+
     public List<GameObject> cards = new();
+    private List<GameObject> _playableCards = new();
 
     public int index;
 
     public void CacheReferences()
     {
         _gameInstance = transform.parent.parent.GetComponent<GameInstance>();
-        _gameManager = _gameInstance.gameManager;
-        _players = _gameInstance.players;
-        _deck = _gameInstance.deck;
+        _gameManager = _gameInstance.GameManager;
+        _players = _gameInstance.Players;
+        _deck = _gameInstance.Deck;
+        _colorChange = _gameInstance.ColorChange;
     }
 
     public void UpdateCardVisual()
@@ -37,11 +40,23 @@ public class Player : Agent
     }
     public override void CollectObservations(VectorSensor sensor)
     {
-        int emptyCards = 30 - cards.Count;
-        for (int i = 0; i < cards.Count; i++) // cards in hand
+        _playableCards.Clear();
+        foreach (GameObject card in cards)
         {
-            sensor.AddObservation(cards[i].GetComponent<Card>().color);
-            sensor.AddObservation(cards[i].GetComponent<Card>().value);
+            if (_gameManager.ValidateCardToPlay(card))
+            {
+                _playableCards.Add(card);
+            }
+        }
+
+        int emptyCards = 30 - _playableCards.Count;
+        int cardsInHandLimit = 30;
+        if (_playableCards.Count < cardsInHandLimit) cardsInHandLimit = _playableCards.Count;
+
+        for (int i = 0; i < cardsInHandLimit; i++) // cards in hand
+        {
+            sensor.AddObservation(_playableCards[i].GetComponent<Card>().color);
+            sensor.AddObservation(_playableCards[i].GetComponent<Card>().value);
         }
         for (int i = 0; i < emptyCards; i++) // empty cards
         {
@@ -55,7 +70,7 @@ public class Player : Agent
 
         foreach (Player player in _players) // other player's number of cards
         {
-            if (player == this) continue;
+            if (player.Equals(this)) continue;
 
             sensor.AddObservation(player.cards.Count);
         }
@@ -63,15 +78,29 @@ public class Player : Agent
         sensor.AddObservation(_gameManager.groundCard.GetComponent<Card>().color); // ground card
         sensor.AddObservation(_gameManager.groundCard.GetComponent<Card>().value);
 
+        sensor.AddObservation(_gameManager.gameState.Equals(GameManager.GameState.ChoosingColor)); // is the agent choosing color
+
         base.CollectObservations(sensor);
     }
 
     public override void OnActionReceived(ActionBuffers actions)
     {
         int decision = actions.DiscreteActions[0];
-        Debug.Log(decision);
 
-        if (decision == 30)
+        if (_gameManager.gameState.Equals(GameManager.GameState.ChoosingColor)) // color change
+        {
+            if (decision >= 0 && decision <= 3)
+            {
+                _colorChange.ChangeColor(decision); // color change success
+                return;
+            }
+            else // color change fail
+            {
+                //AddReward(-0.01f);
+                RequestDecision();
+            }
+        }
+        else if (decision == 30) // draw card
         {
             GameObject card = _deck.DrawCard();
             cards.Add(card);
@@ -81,25 +110,25 @@ public class Player : Agent
             UpdateCardVisual();
             _gameManager.MoveToNextPlayer();
 
-            AddReward(-0.01f);
+            //AddReward(-0.01f);
         }
-        else if (decision > cards.Count - 1)
+        else if (decision > _playableCards.Count - 1) // tried playing a card that isn't in hand
         {
-            AddReward(-0.01f);
+            //AddReward(-0.01f);
             RequestDecision();
         }
-        else
+        else // tried playing a card in hand
         {
-            GameObject card = cards[decision];
-            if (_gameManager.ValidateCardToPlay(card))
+            GameObject card = _playableCards[decision];
+            if (_gameManager.ValidateCardToPlay(card)) // successfull play
             {
                 _gameManager.PlayCard(card);
                 AddReward(+0.1f);
             }
-            else
+            else // non valid play
             {
                 RequestDecision();
-                AddReward(-0.01f);
+                //AddReward(-0.01f);
             }
         }
 

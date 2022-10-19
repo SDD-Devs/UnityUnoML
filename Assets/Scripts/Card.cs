@@ -11,20 +11,21 @@ public class Card : MonoBehaviour
     [Tooltip("0 - 9 = number cards\n10 = draw 2\n11 = reverse\n12 = skip\n13 = wild\n14 = wild draw 4")]
     public int value;
 
-    private SpriteRenderer _spriteRenderer;
+    public SpriteRenderer SpriteRenderer;
+
     private TextMeshPro _bigValue;
     private TextMeshPro _smallValue;
 
     private void Awake()
     {
-        _spriteRenderer = transform.Find("Square").GetComponent<SpriteRenderer>();
+        SpriteRenderer = transform.Find("Square").GetComponent<SpriteRenderer>();
         _bigValue = transform.Find("Value").GetComponent<TextMeshPro>();
         _smallValue = transform.Find("Value small").GetComponent<TextMeshPro>();
     }
 
     private void Start()
     {
-        _spriteRenderer.color = GetColorFromInt();
+        SpriteRenderer.color = GetColorFromInt(color);
         _bigValue.text = GetValueString();
         _smallValue.text = GetValueString();
     }
@@ -67,7 +68,7 @@ public class Card : MonoBehaviour
         else return value + "";
     }
 
-    private Color GetColorFromInt()
+    public Color GetColorFromInt(int color)
     {
         if (color == -1)
         {

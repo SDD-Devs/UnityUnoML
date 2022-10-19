@@ -184,7 +184,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BrainParameters:
-    VectorObservationSize: 67
+    VectorObservationSize: 68
     NumStackedVectorObservations: 10
     m_ActionSpec:
       m_NumContinuousActions: 0
@@ -216,6 +216,6 @@ MonoBehaviour:
   agentParameters:
     maxStep: 0
   hasUpgradedFromAgentParameters: 1
-  MaxStep: 0
+  MaxStep: 10
   cards: []
   index: 0

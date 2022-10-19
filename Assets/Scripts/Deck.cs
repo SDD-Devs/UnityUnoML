@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,13 +15,14 @@ public class Deck : MonoBehaviour
     public void CacheReferences()
     {
         _gameInstance = transform.parent.parent.GetComponent<GameInstance>();
-        _gameManager = _gameInstance.gameManager;
-        _players = _gameInstance.players;
-        _discarded = _gameInstance.discarded;
+        _gameManager = _gameInstance.GameManager;
+        _players = _gameInstance.Players;
+        _discarded = _gameInstance.Discarded;
     }
 
     public void CreateStartingDeck()
     {
+        cards.Clear();
         for (int color = 0; color < 4; color++) // Each of the 4 colors
         {
             cards.Add(CreateCard(color, 0));// 0s
@@ -54,7 +56,15 @@ public class Deck : MonoBehaviour
         GameObject card = cards[0];
 
         cards.RemoveAt(0);
-        if (cards.Count == 0)
+        if (cards.Count == 0 && _discarded.cards.Count == 1)
+        {
+            GameObject newInstance = Instantiate(_gameInstance.GameInstancePrefab);
+            newInstance.transform.position = _gameInstance.transform.position;
+            newInstance.name = "GameInstance";
+            Destroy(_gameInstance.gameObject);
+            Debug.Log("Out of cards");
+        }
+        else if (cards.Count == 0)
         {
             ReuseDiscarded();
         }
@@ -64,9 +74,9 @@ public class Deck : MonoBehaviour
 
     public void GiveOutStartCards()
     {
-        foreach(Player player in _players)
+        foreach (Player player in _players)
         {
-            for(int i = 0; i < 7; i++)
+            for (int i = 0; i < 7; i++)
             {
                 GameObject card = DrawCard();
                 player.cards.Add(card);
@@ -87,6 +97,13 @@ public class Deck : MonoBehaviour
             _discarded.cards.Remove(card);
             card.transform.parent = transform;
             card.transform.position = transform.position;
+
+            Card card1 = card.GetComponent<Card>();
+            if (card1.value >= 13)
+            {
+                card1.color = -1;
+                card1.SpriteRenderer.color = new Color(0f / 255f, 0f / 255f, 0f / 255f, 1f);
+            }
         }
 
         cards.Shuffle();

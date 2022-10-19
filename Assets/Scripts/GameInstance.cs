@@ -3,26 +3,32 @@ using UnityEngine;
 
 public class GameInstance : MonoBehaviour
 {
-    public GameManager gameManager;
-    public List<Player> players;
-    public Deck deck;
-    public Discarded discarded;
+    public GameObject GameInstancePrefab;
+
+    public GameManager GameManager { get; private set; }
+    public List<Player> Players { get; private set; }
+    public Deck Deck { get; private set; }
+    public Discarded Discarded { get; private set; }
+    public ColorChange ColorChange { get; private set; }
 
     private void Awake()
     {
-        gameManager = transform.Find("---MANAGERS---").Find("GameManager").GetComponent<GameManager>();
-        for (int i = 0; i < transform.Find("---PLAYERS---").childCount; i++) players.Add(transform.Find("---PLAYERS---").GetChild(i).GetComponent<Player>());
-        deck = transform.Find("Board").Find("Deck").GetComponent<Deck>();
-        discarded = transform.Find("Board").Find("Discarded").GetComponent<Discarded>();
+        GameManager = transform.Find("---MANAGERS---").Find("GameManager").GetComponent<GameManager>();
+        Players = new();
+        for (int i = 0; i < transform.Find("---PLAYERS---").childCount; i++) Players.Add(transform.Find("---PLAYERS---").GetChild(i).GetComponent<Player>());
+        Deck = transform.Find("Board").Find("Deck").GetComponent<Deck>();
+        Discarded = transform.Find("Board").Find("Discarded").GetComponent<Discarded>();
+        ColorChange = transform.Find("Board").Find("ColorChange").GetComponent<ColorChange>();
 
         CacheReferences();
     }
 
     private void CacheReferences()
     {
-        gameManager.CacheReferences();
-        foreach (Player player in players) player.CacheReferences();
-        deck.CacheReferences();
-        discarded.CacheReferences();
+        GameManager.CacheReferences();
+        foreach (Player player in Players) player.CacheReferences();
+        Deck.CacheReferences();
+        Discarded.CacheReferences();
+        ColorChange.CacheReferences();
     }
 }

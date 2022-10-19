@@ -16,8 +16,12 @@ public class GameManager : MonoBehaviour
     private Deck _deck;
     private Discarded _discarded;
     private List<Player> _players;
+    private ColorChange _colorChange;
 
     public GameObject _cardPrefab;
+
+    public enum GameState { Playing, ChoosingColor }
+    public GameState gameState = GameState.Playing;
 
     public bool gameFinished = false;
 
@@ -31,14 +35,15 @@ public class GameManager : MonoBehaviour
     public void CacheReferences()
     {
         _gameInstance = transform.parent.parent.GetComponent<GameInstance>();
-        _deck = _gameInstance.deck;
-        _discarded = _gameInstance.discarded;
-        _players = _gameInstance.players;
+        _deck = _gameInstance.Deck;
+        _discarded = _gameInstance.Discarded;
+        _players = _gameInstance.Players;
+        _colorChange = _gameInstance.ColorChange;
     }
 
     private void Start()
     {
-        _players = _players.OrderBy(o => o.index).ToList(); // sorting the players in their index order
+        _players = _players.OrderBy(player => player.index).ToList(); // sorting the players in their index order
 
         _deck.CreateStartingDeck();
 
@@ -49,27 +54,30 @@ public class GameManager : MonoBehaviour
         ChooseRandomStartingPlayer();
     }
 
-    //private void FixedUpdate()
+    private void FixedUpdate()
+    {
+        //if (gameFinished) return;
+
+        currentPlayer.RequestDecision();
+    }
+
+    //private void Update()
     //{
-    //    if (gameFinished) return;
+    //    //if (gameFinished) return;
+
+    //    if (!Input.GetMouseButtonDown(0)) return;
 
     //    currentPlayer.RequestDecision();
+
+    //    //StartCoroutine(SecondTimer());
+
+    //    //HandleCardClick();
     //}
-
-    private void Update()
-    {
-        if (gameFinished) return;
-
-        if (!Input.GetMouseButtonDown(0)) return;
-
-        //StartCoroutine(SecondTimer());
-
-        HandleCardClick();
-    }
 
     private void HandleCardClick()
     {
         if (!Input.GetMouseButtonDown(0)) return;
+        if (!gameState.Equals(GameState.Playing)) return;
 
         Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector2 mousePos2D = new Vector2(mousePos.x, mousePos.y);
@@ -87,6 +95,7 @@ public class GameManager : MonoBehaviour
         }
         else if (clicked.transform.parent.TryGetComponent(out Deck deck))
         {
+            if (deck != _deck) return;
             GameObject card = _deck.DrawCard();
             currentPlayer.cards.Add(card);
             card.transform.parent = currentPlayer.transform;
@@ -125,13 +134,33 @@ public class GameManager : MonoBehaviour
         //Win check
         if (currentPlayer.cards.Count == 0)
         {
-            gameFinished = true;
+            //gameFinished = true;
             currentPlayer.AddReward(1.0f);
+            foreach (Player player in _players)
+            {
+                if (player.Equals(currentPlayer)) continue;
+                else
+                {
+                    //player.AddReward(-0.1f);
+                }
+            }
+            foreach (Player player in _players)
+            {
+                player.EndEpisode();
+            }
+
+            GameObject newInstance = Instantiate(_gameInstance.GameInstancePrefab);
+            newInstance.transform.position = transform.position;
+            newInstance.name = "GameInstance";
+            Destroy(_gameInstance.gameObject);
         }
 
         if (card.GetComponent<Card>().value > 9) PerformSpecialCardEffect(card.GetComponent<Card>().value);
 
-        MoveToNextPlayer();
+        if (gameState.Equals(GameState.Playing))
+        {
+            MoveToNextPlayer();
+        }
     }
 
     private void PerformSpecialCardEffect(int value)
@@ -171,13 +200,13 @@ public class GameManager : MonoBehaviour
             }
             GetNextPlayer().UpdateCardVisual();
             ChangeColor();
-            MoveToNextPlayer();
         }
     }
 
     public void ChangeColor()
     {
-        groundCard.GetComponent<Card>().color = Random.Range(0, 4);
+        gameState = GameState.ChoosingColor;
+        _colorChange.gameObject.SetActive(true);
     }
     public void ReverseOrder()
     {

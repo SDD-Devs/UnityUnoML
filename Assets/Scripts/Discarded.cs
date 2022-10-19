@@ -14,8 +14,8 @@ public class Discarded : MonoBehaviour
     public void CacheReferences()
     {
         _gameInstance = transform.parent.parent.GetComponent<GameInstance>();
-        _gameManager = _gameInstance.gameManager;
-        _deck = _gameInstance.deck;
+        _gameManager = _gameInstance.GameManager;
+        _deck = _gameInstance.Deck;
     }
 
     public void ServeFirstCard()
